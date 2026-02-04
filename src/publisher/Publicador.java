@@ -7,10 +7,15 @@ import com.sun.net.httpserver.HttpExchange;
 import javax.xml.soap.*;
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.URL;
 
 public class Publicador {
 
     public static void main(String[] args) throws Exception {
+
+        // 🔎 DIAGNÓSTICO CLAVE: verificar si la WSDL está en el classpath
+        URL wsdlUrl = Publicador.class.getResource("/AlumnoService.wsdl");
+        System.out.println("Ruta WSDL detectada: " + wsdlUrl);
 
         HttpServer server = HttpServer.create(
                 new InetSocketAddress(8080), 0
@@ -22,6 +27,8 @@ public class Publicador {
 
         System.out.println("SOAP PURO publicado en:");
         System.out.println("http://localhost:8080/AlumnoService");
+        System.out.println("WSDL disponible en:");
+        System.out.println("http://localhost:8080/AlumnoService?wsdl");
     }
 
     static class SoapHandler implements HttpHandler {
@@ -36,6 +43,12 @@ public class Publicador {
                 InputStream wsdl =
                         Publicador.class
                                 .getResourceAsStream("/AlumnoService.wsdl");
+
+                if (wsdl == null) {
+                    exchange.sendResponseHeaders(404, -1);
+                    exchange.close();
+                    return;
+                }
 
                 byte[] bytes = wsdl.readAllBytes();
 
@@ -67,8 +80,7 @@ public class Publicador {
                                 )
                         );
 
-                SOAPElement value =
-                        result.addChildElement("resultado");
+                SOAPElement value = result.addChildElement("resultado");
                 value.addTextNode("PROCESADO OK");
 
                 response.saveChanges();
