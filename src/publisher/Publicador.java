@@ -7,19 +7,21 @@ import com.sun.net.httpserver.HttpExchange;
 import javax.xml.soap.*;
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.URL;
 
 public class Publicador {
 
+    // 🔹 RUTA ABSOLUTA DEL WSDL
+    private static final String WSDL_PATH =
+            "C:/Users/USUARIO/IdeaProjects/soap_alumnos/src/resources/AlumnoService.wsdl";
+
     public static void main(String[] args) throws Exception {
 
-        // 🔎 DIAGNÓSTICO CLAVE: verificar si la WSDL está en el classpath
-        URL wsdlUrl = Publicador.class.getResource("/AlumnoService.wsdl");
-        System.out.println("Ruta WSDL detectada: " + wsdlUrl);
+        File wsdlFile = new File(WSDL_PATH);
+        System.out.println("Ruta WSDL usada: " + wsdlFile.getAbsolutePath());
 
-        if (wsdlUrl == null) {
-            System.err.println("❌ ERROR: AlumnoService.wsdl NO está en el classpath");
-            System.err.println("👉 Debe estar en src/main/resources o marcado como Resources Root");
+        if (!wsdlFile.exists()) {
+            System.err.println("❌ ERROR: WSDL no encontrada");
+            return;
         }
 
         HttpServer server = HttpServer.create(
@@ -27,7 +29,6 @@ public class Publicador {
         );
 
         server.createContext("/AlumnoService", new SoapHandler());
-        server.setExecutor(null); // executor por defecto
         server.start();
 
         System.out.println("SOAP PURO publicado en:");
@@ -43,20 +44,12 @@ public class Publicador {
 
             String query = exchange.getRequestURI().getQuery();
 
-            // 🔹 PETICIÓN DE WSDL (robusta)
+            // 🔹 WSDL
             if (query != null && query.toLowerCase().contains("wsdl")) {
 
-                InputStream wsdl =
-                        Publicador.class.getResourceAsStream("/AlumnoService.wsdl");
+                File wsdlFile = new File(WSDL_PATH);
 
-                if (wsdl == null) {
-                    System.err.println("❌ WSDL no encontrada en runtime");
-                    exchange.sendResponseHeaders(404, -1);
-                    exchange.close();
-                    return;
-                }
-
-                byte[] bytes = wsdl.readAllBytes();
+                byte[] bytes = java.nio.file.Files.readAllBytes(wsdlFile.toPath());
 
                 exchange.getResponseHeaders()
                         .set("Content-Type", "text/xml; charset=utf-8");
@@ -73,7 +66,6 @@ public class Publicador {
                 SOAPMessage request =
                         factory.createMessage(null, exchange.getRequestBody());
 
-                // (Aquí podrías parsear request si lo deseas)
                 SOAPMessage response = factory.createMessage();
                 SOAPEnvelope envelope = response.getSOAPPart().getEnvelope();
                 SOAPBody body = envelope.getBody();
