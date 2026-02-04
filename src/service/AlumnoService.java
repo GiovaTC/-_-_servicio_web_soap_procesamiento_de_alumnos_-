@@ -44,13 +44,17 @@ public class AlumnoService implements Provider<SOAPMessage> {
 
             DBUtil.guardar(hexEnvio, hexRespuesta);
 
-            // 🔹 Construcción de la respuesta SOAP
+            // 🔹 Construcción de la respuesta SOAP completa
             MessageFactory factory = MessageFactory.newInstance();
             SOAPMessage response = factory.createMessage();
-            SOAPBody responseBody = response.getSOAPBody();
+            SOAPEnvelope envelope = response.getSOAPPart().getEnvelope();
+            SOAPBody responseBody = envelope.getBody();
 
-            SOAPElement result = responseBody.addChildElement("resultado");
-            result.addTextNode("PROCESADO OK");
+            // Elemento de respuesta según WSDL
+            SOAPElement responseElement = responseBody.addChildElement(
+                    "procesarAlumnoResponse", "ns1", "http://service.alumno/"
+            );
+            responseElement.addChildElement("resultado").addTextNode("PROCESADO OK");
 
             response.saveChanges();
             return response;
