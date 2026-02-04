@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:tns="http://service.alumno/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://service.alumno/"
+    name="AlumnoService">
+
+    <!-- ===== Tipos ===== -->
+    <types>
+        <xsd:schema targetNamespace="http://service.alumno/">
+
+            <xsd:element name="procesarAlumnoRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="id" type="xsd:int"/>
+                        <xsd:element name="nombre" type="xsd:string"/>
+                        <xsd:element name="correo" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="procesarAlumnoResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="resultado" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+        </xsd:schema>
+    </types>
+
+    <!-- ===== Mensajes ===== -->
+    <message name="ProcesarAlumnoRequest">
+        <part name="parameters" element="tns:procesarAlumnoRequest"/>
+    </message>
+
+    <message name="ProcesarAlumnoResponse">
+        <part name="parameters" element="tns:procesarAlumnoResponse"/>
+    </message>
+
+    <!-- ===== PortType ===== -->
+    <portType name="AlumnoServicePortType">
+        <operation name="procesarAlumno">
+            <input message="tns:ProcesarAlumnoRequest"/>
+            <output message="tns:ProcesarAlumnoResponse"/>
+        </operation>
+    </portType>
+
+    <!-- ===== Binding ===== -->
+    <binding name="AlumnoServiceSoapBinding" type="tns:AlumnoServicePortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="procesarAlumno">
+            <soap:operation soapAction="procesarAlumno"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+
+    <!-- ===== Service ===== -->
+    <service name="AlumnoService">
+        <port name="AlumnoServicePort" binding="tns:AlumnoServiceSoapBinding">
+            <soap:address location="http://localhost:8080/AlumnoService"/>
+        </port>
+    </service>
+
+</definitions>
