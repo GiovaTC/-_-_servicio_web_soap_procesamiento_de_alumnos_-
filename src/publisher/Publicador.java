@@ -8,6 +8,7 @@ import javax.xml.soap.MessageFactory;
 import javax.xml.soap.SOAPMessage;
 import java.io.File;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.net.InetSocketAddress;
 
 import service.AlumnoService; // Importa tu clase lógica
@@ -56,7 +57,8 @@ public class Publicador {
                 exchange.getResponseHeaders().set("Content-Type", "text/xml; charset=utf-8");
                 exchange.sendResponseHeaders(200, bytes.length);
                 exchange.getResponseBody().write(bytes);
-                exchange.close();
+                exchange.getResponseBody().flush();
+                exchange.getResponseBody().close();
                 return;
             }
 
@@ -71,10 +73,17 @@ public class Publicador {
                 SOAPMessage response = alumnoService.invoke(request);
 
                 System.out.println("✅ Respuesta generada, enviando al cliente...");
+
+                // Convertimos la respuesta a bytes para calcular longitud
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                response.writeTo(out);
+                byte[] bytes = out.toByteArray();
+
                 exchange.getResponseHeaders().set("Content-Type", "text/xml; charset=utf-8");
-                exchange.sendResponseHeaders(200, 0);
-                response.writeTo(exchange.getResponseBody());
-                exchange.close();
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
+                exchange.getResponseBody().flush();
+                exchange.getResponseBody().close();
 
             } catch (Exception e) {
                 System.err.println("❌ Error procesando SOAP: " + e.getMessage());
