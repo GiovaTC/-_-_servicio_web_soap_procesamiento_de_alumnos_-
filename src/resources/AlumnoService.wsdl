@@ -57,7 +57,8 @@
     <binding name="AlumnoServiceSoapBinding" type="tns:AlumnoServicePortType">
         <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
         <operation name="procesarAlumno">
-            <soap:operation soapAction="procesarAlumno"/>
+            <!-- 🔹 Ajuste: soapAction como URI -->
+            <soap:operation soapAction="http://service.alumno/procesarAlumno"/>
             <input>
                 <soap:body use="literal"/>
             </input>
