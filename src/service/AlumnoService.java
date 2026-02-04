@@ -10,31 +10,41 @@ import javax.xml.ws.Provider;
 import javax.xml.ws.ServiceMode;
 import javax.xml.ws.Service;
 
-import javax.xml.transform.dom.DOMSource; // 🔹 línea adicionada
-// ya no necesitas ByteArrayInputStream
+import javax.xml.transform.dom.DOMSource;
 
 @ServiceMode(Service.Mode.MESSAGE)
 public class AlumnoService implements Provider<SOAPMessage> {
 
     @Override
     public SOAPMessage invoke(SOAPMessage request) {
-
         try {
+            // 🔹 Log para depuración
+            System.out.println("➡️ Procesando request SOAP en AlumnoService...");
+            request.writeTo(System.out);
+
             SOAPBody body = request.getSOAPBody();
+            if (body == null || body.getFirstChild() == null) {
+                throw new RuntimeException("El SOAPBody está vacío o no contiene elementos.");
+            }
+
             SOAPElement alumnoElement = (SOAPElement) body.getFirstChild();
 
             JAXBContext context = JAXBContext.newInstance(Alumno.class);
             Unmarshaller unmarshaller = context.createUnmarshaller();
 
-            // 🔹 Aquí la línea corregida:
+            // 🔹 Unmarshal directo desde el DOM del SOAPElement
             Alumno alumno = (Alumno) unmarshaller.unmarshal(new DOMSource(alumnoElement));
 
+            System.out.println("✅ Alumno unmarshalled: " + alumno);
+
+            // 🔹 Procesamiento de negocio
             String xml = alumno.toString();
             String hexEnvio = HexUtil.toHex(xml);
             String hexRespuesta = DummyServer.enviar(hexEnvio);
 
             DBUtil.guardar(hexEnvio, hexRespuesta);
 
+            // 🔹 Construcción de la respuesta SOAP
             MessageFactory factory = MessageFactory.newInstance();
             SOAPMessage response = factory.createMessage();
             SOAPBody responseBody = response.getSOAPBody();
@@ -46,6 +56,7 @@ public class AlumnoService implements Provider<SOAPMessage> {
             return response;
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Error procesando SOAP", e);
         }
     }
