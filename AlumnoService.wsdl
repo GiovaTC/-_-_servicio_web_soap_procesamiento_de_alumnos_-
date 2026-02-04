@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions
-        xmlns="http://schemas.xmlsoap.org/wsdl/"
-        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-        xmlns:tns="http://service.alumno/"
-        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-        targetNamespace="http://service.alumno/"
-        name="AlumnoService">
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:tns="http://service.alumno/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://service.alumno/"
+    name="AlumnoService">
 
     <!-- ===== Tipos ===== -->
     <types>
@@ -15,12 +15,8 @@
                 <xsd:complexType>
                     <xsd:sequence>
                         <xsd:element name="id" type="xsd:int"/>
-                        <xsd:element name="idAlumno" type="xsd:int"/>
-                        <xsd:element name="idCurso" type="xsd:int"/>
                         <xsd:element name="nombre" type="xsd:string"/>
-                        <xsd:element name="sexo" type="xsd:string"/>
-                        <xsd:element name="edad" type="xsd:int"/>
-                        <xsd:element name="direccion" type="xsd:string"/>
+                        <xsd:element name="correo" type="xsd:string"/>
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:element>
