@@ -29,40 +29,56 @@ public class Publicador {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
 
+            // 🔹 Si piden el WSDL
+            if (exchange.getRequestURI().getQuery() != null &&
+                    exchange.getRequestURI().getQuery().equalsIgnoreCase("wsdl")) {
+
+                InputStream wsdl =
+                        Publicador.class
+                                .getResourceAsStream("/AlumnoService.wsdl");
+
+                byte[] bytes = wsdl.readAllBytes();
+
+                exchange.getResponseHeaders()
+                        .set("Content-Type", "text/xml; charset=utf-8");
+
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
+                exchange.close();
+                return;
+            }
+
+            // 🔹 SOAP Request normal
             try {
-                // 🔹 Leer SOAP Request
                 MessageFactory factory = MessageFactory.newInstance();
                 SOAPMessage request =
                         factory.createMessage(null, exchange.getRequestBody());
 
-                // (aquí podrías procesar el request si lo deseas)
-
-                // 🔹 Crear SOAP Response correctamente (SAAJ)
                 SOAPMessage response = factory.createMessage();
                 SOAPEnvelope envelope = response.getSOAPPart().getEnvelope();
                 SOAPBody body = envelope.getBody();
 
-                SOAPBodyElement resultado =
+                SOAPBodyElement result =
                         body.addBodyElement(
                                 envelope.createName(
-                                        "resultado",
+                                        "procesarAlumnoResponse",
                                         "ns1",
                                         "http://service.alumno/"
                                 )
                         );
 
-                resultado.addTextNode("PROCESADO OK");
+                SOAPElement value =
+                        result.addChildElement("resultado");
+                value.addTextNode("PROCESADO OK");
 
                 response.saveChanges();
 
-                // 🔹 Enviar respuesta HTTP
                 exchange.getResponseHeaders()
                         .set("Content-Type", "text/xml; charset=utf-8");
 
                 exchange.sendResponseHeaders(200, 0);
-                OutputStream os = exchange.getResponseBody();
-                response.writeTo(os);
-                os.close();
+                response.writeTo(exchange.getResponseBody());
+                exchange.close();
 
             } catch (Exception e) {
                 e.printStackTrace();
