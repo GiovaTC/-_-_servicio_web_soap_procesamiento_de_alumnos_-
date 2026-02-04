@@ -34,10 +34,10 @@ public class Publicador {
 
         server.start();
 
-        System.out.println("SOAP publicado en:");
-        System.out.println("http://localhost:8080/AlumnoService");
-        System.out.println("WSDL disponible en:");
-        System.out.println("http://localhost:8080/AlumnoService?wsdl");
+        System.out.println("✅ SOAP publicado en:");
+        System.out.println("   http://localhost:8080/AlumnoService");
+        System.out.println("✅ WSDL disponible en:");
+        System.out.println("   http://localhost:8080/AlumnoService?wsdl");
     }
 
     static class SoapHandler implements HttpHandler {
@@ -45,9 +45,11 @@ public class Publicador {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String query = exchange.getRequestURI().getQuery();
+            System.out.println("➡️ Request recibido: " + exchange.getRequestURI());
 
             // 🔹 Si piden el WSDL
             if (query != null && query.toLowerCase().contains("wsdl")) {
+                System.out.println("📄 Sirviendo WSDL...");
                 File wsdlFile = new File(WSDL_PATH);
                 byte[] bytes = java.nio.file.Files.readAllBytes(wsdlFile.toPath());
 
@@ -60,6 +62,7 @@ public class Publicador {
 
             // 🔹 Procesar request SOAP normal
             try {
+                System.out.println("📨 Procesando SOAP request...");
                 MessageFactory factory = MessageFactory.newInstance();
                 SOAPMessage request = factory.createMessage(null, exchange.getRequestBody());
 
@@ -67,14 +70,18 @@ public class Publicador {
                 AlumnoService alumnoService = new AlumnoService();
                 SOAPMessage response = alumnoService.invoke(request);
 
+                System.out.println("✅ Respuesta generada, enviando al cliente...");
                 exchange.getResponseHeaders().set("Content-Type", "text/xml; charset=utf-8");
                 exchange.sendResponseHeaders(200, 0);
                 response.writeTo(exchange.getResponseBody());
                 exchange.close();
 
             } catch (Exception e) {
+                System.err.println("❌ Error procesando SOAP: " + e.getMessage());
                 e.printStackTrace();
-                exchange.sendResponseHeaders(500, -1);
+                try {
+                    exchange.sendResponseHeaders(500, -1);
+                } catch (Exception ignored) {}
                 exchange.close();
             }
         }
