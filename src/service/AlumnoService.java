@@ -10,10 +10,10 @@ import javax.xml.ws.Provider;
 import javax.xml.ws.ServiceMode;
 import javax.xml.ws.Service;
 
-import java.io.ByteArrayInputStream;
+import javax.xml.transform.dom.DOMSource; // 🔹 línea adicionada
+// ya no necesitas ByteArrayInputStream
 
 @ServiceMode(Service.Mode.MESSAGE)
-
 public class AlumnoService implements Provider<SOAPMessage> {
 
     @Override
@@ -21,16 +21,13 @@ public class AlumnoService implements Provider<SOAPMessage> {
 
         try {
             SOAPBody body = request.getSOAPBody();
-            SOAPElement alumnoElement =
-                    (SOAPElement) body.getFirstChild();
+            SOAPElement alumnoElement = (SOAPElement) body.getFirstChild();
 
             JAXBContext context = JAXBContext.newInstance(Alumno.class);
             Unmarshaller unmarshaller = context.createUnmarshaller();
 
-            ByteArrayInputStream input =
-                    new ByteArrayInputStream(alumnoElement.toString().getBytes());
-
-            Alumno alumno = (Alumno) unmarshaller.unmarshal(input);
+            // 🔹 Aquí la línea corregida:
+            Alumno alumno = (Alumno) unmarshaller.unmarshal(new DOMSource(alumnoElement));
 
             String xml = alumno.toString();
             String hexEnvio = HexUtil.toHex(xml);
@@ -42,8 +39,7 @@ public class AlumnoService implements Provider<SOAPMessage> {
             SOAPMessage response = factory.createMessage();
             SOAPBody responseBody = response.getSOAPBody();
 
-            SOAPElement result =
-                    responseBody.addChildElement("resultado");
+            SOAPElement result = responseBody.addChildElement("resultado");
             result.addTextNode("PROCESADO OK");
 
             response.saveChanges();
