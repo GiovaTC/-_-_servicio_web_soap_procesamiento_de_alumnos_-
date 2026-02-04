@@ -1,34 +1,56 @@
 package service;
 
-import model.Alumno;
 import util.*;
+import model.Alumno;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import java.io.StringWriter;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.soap.*;
+import javax.xml.ws.Provider;
+import javax.xml.ws.ServiceMode;
+import javax.xml.ws.Service;
 
-public class AlumnoService {
+import java.io.ByteArrayInputStream;
 
-    // Operación SOAP expuesta por Endpoint (sin anotaciones)
-    public String procesarAlumno(Alumno alumno) {
+@ServiceMode(Service.Mode.MESSAGE)
+
+public class AlumnoService implements Provider<SOAPMessage> {
+
+    @Override
+    public SOAPMessage invoke(SOAPMessage request) {
 
         try {
-            JAXBContext context = JAXBContext.newInstance(Alumno.class);
-            Marshaller marshaller = context.createMarshaller();
-            StringWriter writer = new StringWriter();
-            marshaller.marshal(alumno, writer);
+            SOAPBody body = request.getSOAPBody();
+            SOAPElement alumnoElement =
+                    (SOAPElement) body.getFirstChild();
 
-            String xml = writer.toString();
+            JAXBContext context = JAXBContext.newInstance(Alumno.class);
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+
+            ByteArrayInputStream input =
+                    new ByteArrayInputStream(alumnoElement.toString().getBytes());
+
+            Alumno alumno = (Alumno) unmarshaller.unmarshal(input);
+
+            String xml = alumno.toString();
             String hexEnvio = HexUtil.toHex(xml);
             String hexRespuesta = DummyServer.enviar(hexEnvio);
 
             DBUtil.guardar(hexEnvio, hexRespuesta);
 
-            return "MENSAJE PROCESADO CON EXITO\nENVIO HEX:\n"
-                    + hexEnvio + "\nRESPUESTA HEX:\n" + hexRespuesta;
+            MessageFactory factory = MessageFactory.newInstance();
+            SOAPMessage response = factory.createMessage();
+            SOAPBody responseBody = response.getSOAPBody();
+
+            SOAPElement result =
+                    responseBody.addChildElement("resultado");
+            result.addTextNode("PROCESADO OK");
+
+            response.saveChanges();
+            return response;
 
         } catch (Exception e) {
-            return "ERROR: " + e.getMessage();
+            throw new RuntimeException("Error procesando SOAP", e);
         }
     }
 }
